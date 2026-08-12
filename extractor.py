@@ -11,7 +11,7 @@ def extract_vless_keys(happ_link):
         except:
             pass
             
-    cmd = f'xvfb-run gdb -batch -ex "b exit" -ex "run --test-crypt5 \\"{happ_link}\\"" -ex "gcore {core_file}" {happ_bin} > /opt/v1bot/logs/gdb.log 2>&1'
+    cmd = f'xvfb-run gdb -batch -ex "b exit" -ex "run --test-crypt5 \\"{happ_link}\\"" -ex "gcore {core_file}" {happ_bin} > gdb.log 2>&1'
     
     try:
         subprocess.run(cmd, shell=True, timeout=20)

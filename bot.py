@@ -17,23 +17,30 @@ dp = Dispatcher()
 async def handle_link(message: types.Message):
     text = message.text
     if text and text.startswith("happ://"):
-        keys = await asyncio.to_thread(extractor.extract_vless_keys, text)
-        if keys and len(keys) > 0:
+        try:
+            # Пытаемся извлечь ключи
+            keys = await asyncio.to_thread(extractor.extract_vless_keys, text)
+            
+            if not keys:
+                await message.answer("⚠️ Ошибка: Экстрактор вернул пустой результат.")
+                return
+            
             unique_id = str(uuid.uuid4())[:8]
             os.makedirs(DATA_DIR, exist_ok=True)
             file_path = os.path.join(DATA_DIR, unique_id)
             
-            with open(file_path, "w") as f:
-                f.write("\n".join(keys) if isinstance(keys, list) else str(keys))
+            content_to_write = "\n".join(keys) if isinstance(keys, list) else str(keys)
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(content_to_write)
             
-            # Формируем сырую ссылку через домен Render
             raw_sub = f"{RENDER_URL}/sub/{unique_id}"
-            
-            # Заворачиваем в конвертер с URL-кодированием
             encoded_raw = urllib.parse.quote(raw_sub, safe="")
             sub_url = f"https://tetragidropiranilciklopentiltetragidropiridopiridinovye.online/exec?url={encoded_raw}"
             
             await message.answer(sub_url)
+            
+        except Exception as e:
+            await message.answer(f"❌ Ошибка в коде бота: {str(e)}")
 
 async def main():
     os.makedirs(DATA_DIR, exist_ok=True)

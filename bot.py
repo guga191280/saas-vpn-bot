@@ -8,8 +8,7 @@ import extractor
 
 TOKEN = "8011501394:AAEZ0enx8uFE-62EcRcGqyuIBA4eKrBlyJg"
 DATA_DIR = "data"
-os.makedirs(DATA_DIR, exist_ok=True)
-SERVER_IP = "169.58.119.116"
+RENDER_URL = "https://v1bot-tiqi.onrender.com"
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher()
@@ -25,12 +24,12 @@ async def handle_link(message: types.Message):
             file_path = os.path.join(DATA_DIR, unique_id)
             
             with open(file_path, "w") as f:
-                f.write("\n".join(keys))
+                f.write("\n".join(keys) if isinstance(keys, list) else str(keys))
             
-            # Формируем сырую ссылку через IP и порт 5002 (как у донора)
-            raw_sub = f"http://{SERVER_IP}:5002/sub/{unique_id}"
+            # Формируем сырую ссылку через домен Render
+            raw_sub = f"{RENDER_URL}/sub/{unique_id}"
             
-            # Заворачиваем в быстрый конвертер с URL-кодированием
+            # Заворачиваем в конвертер с URL-кодированием
             encoded_raw = urllib.parse.quote(raw_sub, safe="")
             sub_url = f"https://tetragidropiranilciklopentiltetragidropiridopiridinovye.online/exec?url={encoded_raw}"
             
@@ -42,4 +41,4 @@ async def main():
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
-    asyncio.main(main()) if hasattr(asyncio, "main") else asyncio.run(main())
+    asyncio.run(main())

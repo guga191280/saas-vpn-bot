@@ -4,7 +4,7 @@ import os
 import uvicorn
 
 app = FastAPI()
-DATA_DIR = "/opt/v1bot/data"
+DATA_DIR = "data"
 
 @app.get("/sub/{unique_id}", response_class=PlainTextResponse)
 async def get_sub(unique_id: str, response: Response):
@@ -29,5 +29,6 @@ async def get_sub(unique_id: str, response: Response):
     return subscription_header + keys
 
 if __name__ == "__main__":
+    os.makedirs(DATA_DIR, exist_ok=True)
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run(app, host="0.0.0.0", port=port)

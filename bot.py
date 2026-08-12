@@ -8,6 +8,7 @@ import extractor
 
 TOKEN = "8011501394:AAEZ0enx8uFE-62EcRcGqyuIBA4eKrBlyJg"
 DATA_DIR = "data"
+os.makedirs(DATA_DIR, exist_ok=True)
 SERVER_IP = "169.58.119.116"
 
 bot = Bot(token=TOKEN)

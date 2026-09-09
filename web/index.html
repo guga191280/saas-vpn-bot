@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="ru" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SaaS VPN Admin</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; font-family: system-ui, sans-serif; }
+        .card { background-color: #1e293b; border-radius: 16px; padding: 24px; border: 1px solid #334155; }
+        .metric { font-size: 2rem; font-weight: 800; color: #38bdf8; }
+        .input-box { background: #0f172a; border: 1px solid #334155; color: white; padding: 10px 14px; border-radius: 8px; width: 100%; outline: none;}
+        .btn { background: #38bdf8; color: #0f172a; font-weight: bold; padding: 10px 16px; border-radius: 8px; cursor: pointer; transition: 0.2s;}
+        .btn:hover { background: #0ea5e9; }
+        .btn-red { background: #ef4444; color: white; }
+        .btn-red:hover { background: #dc2626; }
+    </style>
+</head>
+<body class="p-6">
+    <div id="login-screen" class="max-w-sm mx-auto mt-32 card text-center">
+        <h2 class="text-2xl font-bold mb-6">Вход в Панель</h2>
+        <input type="text" id="login-user" placeholder="Логин" class="input-box mb-4">
+        <input type="password" id="login-pass" placeholder="Пароль" class="input-box mb-6">
+        <button onclick="login()" class="btn w-full">Войти</button>
+        <p id="login-err" class="text-red-400 mt-4 hidden">Неверный логин или пароль</p>
+    </div>
+
+    <div id="dashboard" class="max-w-6xl mx-auto hidden">
+        <div class="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
+            <h1 class="text-3xl font-bold">Панель Управления</h1>
+            <button onclick="logout()" class="btn btn-red">Выйти из системы</button>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="card text-center"><div class="text-sm text-gray-400 uppercase">Юзеров</div><div class="metric" id="stat-users">-</div></div>
+            <div class="card text-center"><div class="text-sm text-gray-400 uppercase">Клонов</div><div class="metric text-emerald-400" id="stat-clones">-</div></div>
+            <div class="card text-center"><div class="text-sm text-gray-400 uppercase">В бане</div><div class="metric text-red-400" id="stat-bans">-</div></div>
+            <div class="card text-center"><div class="text-sm text-gray-400 uppercase">Подписка</div><div class="metric text-purple-400 text-lg mt-2 cursor-pointer" onclick="action('toggle_sub')" id="stat-sub">-</div></div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="card">
+                <h2 class="text-xl font-bold mb-4 border-b border-slate-700 pb-2">👁 Шпионы</h2>
+                <ul id="list-spies" class="space-y-3 mb-4 text-sm text-slate-300"></ul>
+                <div class="flex gap-2">
+                    <input type="text" id="in-spy" placeholder="ID канала (-100...)" class="input-box">
+                    <button onclick="action('add_spy', 'in-spy')" class="btn shrink-0">Добавить</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2 class="text-xl font-bold mb-4 border-b border-slate-700 pb-2">👮‍♂️ Админы</h2>
+                <ul id="list-admins" class="space-y-3 mb-4 text-sm text-slate-300"></ul>
+                <div class="flex gap-2">
+                    <input type="text" id="in-admin" placeholder="ID админа" class="input-box">
+                    <button onclick="action('add_admin', 'in-admin')" class="btn shrink-0">Добавить</button>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2 class="text-xl font-bold mb-4 border-b border-slate-700 pb-2">🛡 Блокировки и ЧС</h2>
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="in-ban" placeholder="ID юзера для бана" class="input-box">
+                    <button onclick="action('ban_user', 'in-ban')" class="btn btn-red shrink-0">Забанить</button>
+                </div>
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="in-bl" placeholder="Слово в ЧС" class="input-box">
+                    <button onclick="action('add_blacklist', 'in-bl')" class="btn shrink-0">Добавить в ЧС</button>
+                </div>
+                <button onclick="action('clear_blacklist')" class="btn btn-red w-full">Очистить весь ЧС</button>
+            </div>
+
+            <div class="card flex flex-col justify-between">
+                <div>
+                    <h2 class="text-xl font-bold mb-4 border-b border-slate-700 pb-2">🔗 Обязательные Каналы</h2>
+                    <ul id="list-ch" class="space-y-3 mb-4 text-sm text-slate-300"></ul>
+                </div>
+                <button onclick="action('clear_channels')" class="btn btn-red w-full">Очистить все каналы</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let token = localStorage.getItem("vpn_token");
+        if(token) loadData();
+
+        function login() {
+            const u = document.getElementById("login-user").value;
+            const p = document.getElementById("login-pass").value;
+            if(u === "alex" && p === "alexander77") {
+                token = p;
+                localStorage.setItem("vpn_token", token);
+                document.getElementById("login-err").classList.add("hidden");
+                loadData();
+            } else {
+                document.getElementById("login-err").classList.remove("hidden");
+            }
+        }
+
+        function logout() {
+            token = null;
+            localStorage.removeItem("vpn_token");
+            document.getElementById("dashboard").classList.add("hidden");
+            document.getElementById("login-screen").classList.remove("hidden");
+        }
+
+        function loadData() {
+            fetch("/api/data", { headers: { "Authorization": "Bearer " + token } })
+            .then(r => {
+                if(r.status === 401) throw new Error("Auth");
+                return r.json();
+            })
+            .then(d => {
+                document.getElementById("login-screen").classList.add("hidden");
+                document.getElementById("dashboard").classList.remove("hidden");
+                
+                document.getElementById("stat-users").innerText = d.users;
+                document.getElementById("stat-clones").innerText = d.clones;
+                document.getElementById("stat-bans").innerText = d.banned;
+                document.getElementById("stat-sub").innerText = d.force_sub ? "ВКЛЮЧЕНА" : "ВЫКЛЮЧЕНА";
+                document.getElementById("stat-sub").className = d.force_sub ? "metric text-emerald-400 text-lg mt-2 cursor-pointer" : "metric text-red-400 text-lg mt-2 cursor-pointer";
+
+                document.getElementById("list-spies").innerHTML = d.spies.map(s => `<li class="flex justify-between items-center bg-slate-800 p-2 rounded"><span>${s}</span> <button onclick="action('del_spy', null, '${s}')" class="text-red-400 hover:text-red-300 font-bold">Удалить</button></li>`).join("") || "<li>Нет шпионов</li>";
+                document.getElementById("list-admins").innerHTML = d.admins.map(s => `<li class="flex justify-between items-center bg-slate-800 p-2 rounded"><span>ID: ${s}</span> <button onclick="action('del_admin', null, '${s}')" class="text-red-400 hover:text-red-300 font-bold">Удалить</button></li>`).join("") || "<li>Нет админов</li>";
+                document.getElementById("list-ch").innerHTML = d.channels.map(c => `<li class="bg-slate-800 p-2 rounded">${c.id}</li>`).join("") || "<li>Нет каналов</li>";
+            })
+            .catch(() => logout());
+        }
+
+        function action(act, inputId = null, directVal = null) {
+            let val = directVal;
+            if(inputId) {
+                val = document.getElementById(inputId).value;
+                document.getElementById(inputId).value = "";
+            }
+            fetch("/api/action", {
+                method: "POST",
+                headers: { "Authorization": "Bearer " + token, "Content-Type": "application/json" },
+                body: JSON.stringify({action: act, value: val})
+            }).then(() => loadData());
+        }
+    </script>
+</body>
+</html>

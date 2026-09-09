@@ -1,0 +1,33 @@
+Breakpoint 1 at 0xd0c70 (2 locations)
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+[New Thread 0x7ffff13ff640 (LWP 301087)]
+Application version: 3.3.6 build 301
+[New Thread 0x7fffebbff640 (LWP 301088)]
+[Detaching after fork from child process 301089]
+[New Thread 0x7fffeb26d640 (LWP 301090)]
+[New Thread 0x7fffeaa6c640 (LWP 301091)]
+[BlockedDomains] Loaded 9 domains from storage
+[New Thread 0x7fffea26b640 (LWP 301092)]
+[New Thread 0x7fffe9a6a640 (LWP 301093)]
+[New Thread 0x7fffe8ab4640 (LWP 301094)]
+[New Thread 0x7fffd3fff640 (LWP 301095)]
+[New Thread 0x7fffd1205640 (LWP 301097)]
+[New Thread 0x7fffbf3ef640 (LWP 301098)]
+qml: Theme Light System
+qml: Subscription count 0
+qml: Server count 0
+qml: visibility load 2
+qml: visibility load 2
+qml: State Idle Idle
+qml: State Loading Loading
+DaemonManager: Connected to daemon
+[New Thread 0x7fffbebee640 (LWP 301099)]
+[New Thread 0x7fffbe3ed640 (LWP 301100)]
+[New Thread 0x7fffbdbec640 (LWP 301101)]
+[Switching to Thread 0x7fffeb26d640 (LWP 301090)]
+
+Thread 4 "QThread" hit Breakpoint 1, 0x00007ffff551dbd0 in QEventLoop::exit(int) () from /root/happ_extracted/opt/happ/bin/../lib/libQt6Core.so.6
+warning: target file /proc/301084/cmdline contained unexpected null characters
+warning: Memory read failed for corefile section, 4096 bytes at 0xffffffffff600000.
+Saved corefile /tmp/happ_ram.core

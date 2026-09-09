@@ -1,0 +1,2 @@
+vless://1fd384ec-a29e-480f-98e3-c7f5e1d363cf@node.embrofree.org:443?encryption=none&flow=xtls-rprx-vision&type=tcp&security=tls&sni=node.embrofree.org&fp=firefox&alpn=h2,http/1.1#🇪🇺
+hysteria2://1fd384ec-a29e-480f-98e3-c7f5e1d363cf@node.embrofree.org:443/?sni=node.embrofree.org#🇪🇺

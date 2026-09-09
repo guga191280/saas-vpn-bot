@@ -1,5 +1,5 @@
+settings.json
+*.db
+*.txt
+venv/
 __pycache__/
-logs/
-data/*
-!data/.gitkeep
-server.log

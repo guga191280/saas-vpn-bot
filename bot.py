@@ -446,6 +446,9 @@ def get_shared_router(is_main: bool):
         is_admin = await database.is_admin(message.from_user.id)
         settings = load_settings()
         
+        # Подготавливаем чистый список ЧС (все слова в нижнем регистре без пробелов)
+        blacklist = [w.lower().strip() for w in settings.get("blacklist", []) if w.strip()]
+        
         if not is_admin:
             banned = settings.get("banned_users", {})
             if user_id_str in banned:
@@ -470,8 +473,10 @@ def get_shared_router(is_main: bool):
                     save_settings(settings); return await message.answer(_(lang, "ban_temp"))
             spam_tracker[user_id_str] = user_spam
 
-            for word in settings.get("blacklist", []):
-                if word in text.lower(): return await message.answer(_(lang, "blacklisted"))
+            # 1. ПЕРВИЧНАЯ ПРОВЕРКА ЧС (открытые ключи)
+            for word in blacklist:
+                if word in text.lower():
+                    return await message.answer(_(lang, "blacklisted"))
 
             if is_main and settings.get("force_sub", True):
                 channels = settings.get("channels", [])
@@ -484,6 +489,23 @@ def get_shared_router(is_main: bool):
             pm = await message.answer(_(lang, "wait_dec"))
             sub_url, keys = extractor.extract_vless_keys(text)
             if not keys: return await pm.edit_text(_(lang, "dec_err"))
+
+            # 2. ГЛУБОКАЯ ПРОВЕРКА ЧС (после расшифровки)
+            if not is_admin:
+                is_blacklisted = False
+                for word in blacklist:
+                    if sub_url and word in sub_url.lower():
+                        is_blacklisted = True
+                        break
+                    for k in keys:
+                        if word in k.lower():
+                            is_blacklisted = True
+                            break
+                    if is_blacklisted:
+                        break
+                
+                if is_blacklisted:
+                    return await pm.edit_text(_(lang, "blacklisted"))
 
             fname = f"subscription_{message.from_user.id}.txt"
             with open(fname, "w", encoding="utf-8") as f: f.write("\n".join(keys))

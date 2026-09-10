@@ -200,7 +200,7 @@ def save_settings(data):
 
 class AdminState(StatesGroup):
     wait_new_channel, wait_bcast_msg, wait_bcast_btn = State(), State(), State()
-    wait_blacklist_word, wait_add_admin, wait_del_admin = State(), State(), State()
+    wait_blacklist_word, wait_del_bl_word, wait_add_admin, wait_del_admin = State(), State(), State(), State()
     wait_ban_user, wait_add_spy, wait_del_spy = State(), State(), State()
     wait_clone_token = State()
 
@@ -215,7 +215,9 @@ def admin_keyboard(lang):
          InlineKeyboardButton(text=_(lang, "btn_clear_ch"), callback_data="admin_clear_channels")],
         [InlineKeyboardButton(text=_(lang, "btn_add_spy"), callback_data="admin_add_spy"),
          InlineKeyboardButton(text=_(lang, "btn_del_spy"), callback_data="admin_del_spy")],
-        [InlineKeyboardButton(text=_(lang, "btn_bl"), callback_data="admin_blacklist"),
+        [InlineKeyboardButton(text="➕ В ЧС", callback_data="admin_blacklist"),
+         InlineKeyboardButton(text="🗑 Из ЧС", callback_data="admin_bl_del")],
+        [InlineKeyboardButton(text="📜 Список ЧС", callback_data="admin_bl_list"),
          InlineKeyboardButton(text=_(lang, "btn_ban"), callback_data="admin_ban_user")],
         [InlineKeyboardButton(text=_(lang, "btn_add_admin"), callback_data="admin_add_admin"),
          InlineKeyboardButton(text=_(lang, "btn_del_admin"), callback_data="admin_del_admin")]
@@ -277,6 +279,16 @@ async def cmd_admin(message: types.Message, state: FSMContext):
     lang = await fetch_user_lang(message.from_user.id)
     await message.answer(_(lang, "admin_title"), reply_markup=admin_keyboard(lang), parse_mode="HTML")
 
+
+@main_router.callback_query(F.data == "admin_bl_list")
+async def show_bl_list_handler(c: types.CallbackQuery):
+    bl = load_settings().get("blacklist", [])
+    if not bl:
+        return await c.answer("ЧС пуст", show_alert=True)
+    msg = "📜 <b>Черный список:</b>\n\n" + "\n".join([f"• <code>{w}</code>" for w in bl])
+    await c.message.answer(msg, parse_mode="HTML")
+    await c.answer()
+
 @main_router.callback_query(F.data == "admin_stats")
 async def show_stats(c: types.CallbackQuery):
     lang = await fetch_user_lang(c.from_user.id)
@@ -324,7 +336,7 @@ async def toggle_sub(c: types.CallbackQuery):
     lang = await fetch_user_lang(c.from_user.id)
     await c.message.edit_reply_markup(reply_markup=admin_keyboard(lang))
 
-@main_router.callback_query(F.data.in_(["admin_add_spy", "admin_del_spy", "admin_add_admin", "admin_del_admin", "admin_ban_user", "admin_blacklist", "admin_add_channel", "admin_clear_channels"]))
+@main_router.callback_query(F.data.in_(["admin_add_spy", "admin_del_spy", "admin_add_admin", "admin_del_admin", "admin_ban_user", "admin_blacklist", "admin_bl_del", "admin_add_channel", "admin_clear_channels"]))
 async def dynamic_admin_routing(c: types.CallbackQuery, state: FSMContext):
     lang = await fetch_user_lang(c.from_user.id)
     route_map = {
@@ -334,6 +346,7 @@ async def dynamic_admin_routing(c: types.CallbackQuery, state: FSMContext):
         "admin_del_admin": (_(lang, "prompt_del_admin"), AdminState.wait_del_admin),
         "admin_ban_user": (_(lang, "prompt_ban_user"), AdminState.wait_ban_user),
         "admin_blacklist": (_(lang, "prompt_bl"), AdminState.wait_blacklist_word),
+        "admin_bl_del": ("Отправьте домен для удаления из ЧС:", AdminState.wait_del_bl_word),
         "admin_add_channel": (_(lang, "prompt_add_ch"), AdminState.wait_new_channel)
     }
     if c.data == "admin_clear_channels":
@@ -601,6 +614,9 @@ async def web_api_action(request):
         s["channels"] = []
     elif action == "add_blacklist" and val:
         if val not in s["blacklist"]: s["blacklist"].append(val.lower().strip())
+    elif action == "del_blacklist" and val:
+        if val.lower().strip() in s.get("blacklist", []):
+            s["blacklist"].remove(val.lower().strip())
     elif action == "clear_blacklist":
         s["blacklist"] = []
     elif action == "ban_user" and val:
